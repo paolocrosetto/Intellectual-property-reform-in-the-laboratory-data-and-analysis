@@ -3,25 +3,35 @@
 ### age and gender 
 
 ## data
-df <- read_csv("Data/final_survey.csv")
+survey <- read_csv("Data/final_survey.csv")
 
 ## age
-df %>% 
+age <- survey %>% 
   select(age) %>% 
-  summarise(mean(age, na.rm = T), sd(age, na.rm = T))
+  summarise(mean_age = mean(age, na.rm = T), sd_age = sd(age, na.rm = T))
 
 
 ## gender
-df %>% 
+gender <- survey %>% 
   group_by(gender) %>% 
   tally() %>% 
   mutate(N = sum(n),
-         share = n/N)
+         share = n/N) %>% 
+  filter(gender == "f") %>% 
+  select(share_female = share)
 
 ### Payoff data
 
-df <- read_csv("Data/payoff_data.csv")
+payoff <- read_csv("Data/payoff_data.csv")
 
-df %>% 
-  summarise(p = mean(payoff), s = sd(payoff), min = min(payoff), max = max(payoff))
+payoff <- payoff %>% 
+  summarise(mean_payoff = mean(payoff), sd_payoff = sd(payoff), min_payoff = min(payoff), max_payoff = max(payoff))
 
+
+sample_stats <- bind_cols(age, gender, payoff)
+
+sample_stats %>% 
+  kable(caption = "Sample statistics", format = "latex", booktabs = "T") %>% 
+  kable_styling(latex_options = "scale_down") %>% 
+  save_kable("Tables/Sample_statistics.pdf")
+          
