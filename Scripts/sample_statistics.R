@@ -34,4 +34,7 @@ sample_stats %>%
   kable(caption = "Sample statistics", format = "latex", booktabs = "T") %>% 
   kable_styling(latex_options = "scale_down") %>% 
   save_kable("Tables/Sample_statistics.pdf")
+
+## cleaning up
+rm(age, gender, payoff, sample_stats, survey)
           
