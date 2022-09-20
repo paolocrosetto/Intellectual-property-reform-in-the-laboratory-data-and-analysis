@@ -33,3 +33,19 @@ source("Scripts/table_2.R")
 
 # individual-level regression
 source("Scripts/individual_points_transition.R")
+
+
+### 3. Effects of voting and information on the transition
+
+# TODO group statistics
+source("Scripts/group_points_vote.R")
+
+# TODO group and individual-level regression
+source("Scripts/table_3.R")
+
+# TODO individual-level statistics
+source("Scripts/individual_points_vote.R")
+
+### 4. Determinants of the vote and the transition to noIP
+
+
