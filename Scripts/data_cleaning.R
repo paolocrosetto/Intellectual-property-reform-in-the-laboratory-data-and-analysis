@@ -5,75 +5,66 @@
 
 ### Data cleaning
 
-### this file generates 3 main datasets:
+### this file generates 3 main datasets: {summarised}, {grouped} and {actions}.
 
-### 1. a dataset summarising the final results for each player in the experiment; 
-### 2. a group_level summary of dataset 1.
-### 3. a dataset with one row per period per player, detailing actions and the players' choiceset and options
+### 1. [summarised]: a dataset summarising the final results for each player in the experiment; 
+### 2. [grouped]: a group_level summary of dataset 1.
+### 3. [actions]: a dataset with one row per period per player, detailing actions and the players' choiceset and options
 
+
+### TODO: merge extendibility with actions.
 
 ### summarised data
-summary <- read_csv("Data/summary_dataset.csv")
+summarised <- read_csv("Data/summary_dataset.csv")
 
-df <- df %>% 
+summarised <- summarised %>% 
   mutate(royalties = royalties_in - royalties_out) %>% 
   mutate(royration = royalties/points)
 
-### importing the choiceset dataset, cleaning and merging
-cs1 <- read_csv("choiceset_computed_0_4500.csv")
-cs2 <- read_csv("choiceset_computed_4500_end.csv")
-csbug <- read_csv("choiceset_computed_NA.csv")
-
-### there is one line present in both datasets, deleting it from cs2
-cs2 <- cs2 %>% filter(...1 != 4499)
-
-### adding rows from the two distinct datasets
-cs <- bind_rows(cs1,cs2)
-
-## correcting the hand = NA bug
-## recap: sometmes people had letters N and A in their letter set; in those cases, R + python treat this as missing (NA) while it is a string ("NA")
-## this was fixed by re-running the choiceset script for those 14 lines. 
-## so now we just need to insert it here
-
-## 1. remove from old dataset
-cs <- cs %>% filter(!is.na(hand))
-
-## 2. import and bind_row
-cs <- bind_rows(cs, csbug)
+### individual choicesets
+choicesets <- read_csv("Data/choicesets.csv")
 
 
-### cleaning from unneeded vraibels
-cs <- cs %>% select(-...1, -choice, -hand)
+### period-level data
+actions <- read_csv("Data/round_level_data.csv")
 
+# merging actions with choiceset
+actions <- actions %>% left_join(choicesets, by = c("subjectID", "repetition", "period"))
 
+# adding group ID to actions
+actions <- actions %>% mutate(groupID = sessionID*10 + group) 
 
-## reading in main data
-md1 <- read_csv("scrabble_raw.csv")
-md2 <- read_csv("scrabble_raw2019.csv")
+# adding group id to summary
+groups <- actions %>% select(subjectID, groupID) %>% distinct()
 
-md <- bind_rows(md1, md2)
+summarised <- summarised %>% left_join(groups, by = "subjectID")
 
-# merging with choiceset
-md <- md %>% left_join(cs, by = c("subjectID", "repetition", "period"))
+# adding treatment (VOTE and INFO conditions) to actions
+treatment <- summarised %>% select(subjectID, votetreat = vote, info) %>% distinct()
+actions <- actions %>% left_join(treatment, by = "subjectID")
 
-# adding group ID
-md <- md %>% mutate(groupID = sessionID*10 + group) 
-
-groups <- md %>% select(subjectID, groupID) %>% distinct()
-
-df <- df %>% left_join(groups, by = "subjectID")
-
-# adding VOTE and INFO conditions to subjects in md
-treat <- df %>% select(subjectID, votetreat = vote, info) %>% distinct()
-md <- md %>% left_join(treat, by = "subjectID")
-
-##cleaning
-rm(cs1, cs2, md1, md2, df2019, csbug, cs, groups, treat)
 
 ## adding data from the intial word task
-#integrating the wordtask data
-wt <- read_csv("wordtask.csv")
-wt19 <- read_csv("wordtask2019.csv")
-wt <- rbind(wt, wt19)
-df <- df %>% left_join(wt, by="subjectID")
-rm(wt, wt19)
+wordtask <- read_csv("Data/word_task_data.csv")
+
+summarised <- summarised %>% left_join(wordtask, by="subjectID")
+
+##cleaning
+rm(choicesets,groups, treatment, wordtask)
+
+## group-level data
+grouped <- actions %>% 
+  group_by(groupID, IPregime, votetreat, info, repetition) %>%
+  mutate(wordvalue = payoff + royalties_spent,
+         roundpayoff = payoff + royalties_earned) %>% 
+  summarise(points = sum(roundpayoff, na.rm = T),
+            Nw = sum(!is.na(new_word)),
+            Next = sum(str_length(letters_added)!= 3, na.rm = T),
+            Nroot = sum(str_length(letters_added)== 3, na.rm = T),
+            ExtRoot = Next/Nroot,
+            value = mean(wordvalue, na.rm = T),
+            length = mean(str_length(new_word), na.rm = T),
+            mincs = mean(mincs, na.rm = T),
+            meancs = mean(meancs, na.rm = T),
+            maxcs = mean(maxcs, na.rm = T)
+  )

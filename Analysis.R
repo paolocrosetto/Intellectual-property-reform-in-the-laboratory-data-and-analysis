@@ -6,11 +6,9 @@
 ### Analysis script for the paper "Intellectual porperty reform in the laboratory"
 
 ### Libraries
-library(tidyverse)
-
-
-### Data
-
+library(tidyverse)                ### the specific R dialect used in this script
+library(kableExtra)               ### export beautiful tables
+library(broom)                    ### run efficently statistical tests and export them to data frames
 
 
 ### Single analysis files
