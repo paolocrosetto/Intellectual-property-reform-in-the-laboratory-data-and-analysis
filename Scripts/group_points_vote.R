@@ -30,3 +30,6 @@ stats_out %>%
   kable_styling(latex_options = "scale_down") %>% 
   save_kable("Tables/Group_points_vote.pdf")
 
+## cleanup
+rm(cohens, grouplastIP, stats, stats_by_group, stats_out, tests)
+
