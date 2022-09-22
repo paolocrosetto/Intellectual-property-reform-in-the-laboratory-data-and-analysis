@@ -48,6 +48,7 @@ actions <- actions %>% left_join(treatment, by = "subjectID")
 wordtask <- read_csv("Data/word_task_data.csv")
 
 summarised <- summarised %>% left_join(wordtask, by="subjectID")
+actions <- actions %>% left_join(wordtask, by = "subjectID")
 
 ##cleaning
 rm(choicesets,groups, treatment, wordtask)
