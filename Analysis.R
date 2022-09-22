@@ -53,3 +53,8 @@ source("Scripts/individual_points_vote.R")
 source("Scripts/table_4.R")
 
 
+### 5. Extendibility of words appendix
+
+source("Scripts/extendibility.R")
+
+source("Scripts/language_comparison.R")
