@@ -48,6 +48,13 @@ source("Scripts/individual_points_vote.R")
 
 ### 4. Determinants of the vote and the transition to noIP
 
+# vote shares
+source("Scripts/vote_shares.R")
+
+# skills and performance
+source("Scripts/skills_performance.R")
+
+
 
 # vote and royalties determinants regression
 source("Scripts/table_4.R")
