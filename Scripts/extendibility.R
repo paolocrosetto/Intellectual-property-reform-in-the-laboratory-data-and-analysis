@@ -87,4 +87,4 @@ rbind(treat, vot) %>%
   save_kable("Tables/EPI_by_treatment.pdf")
 
 # cleanup
-rm(epi_pt, epi_royin, epi_skills, ext)
+rm(epi_pt, epi_royin, epi_skills, ext, cordf, vot, treat)
