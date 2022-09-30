@@ -54,6 +54,8 @@ source("Scripts/vote_shares.R")
 # skills and performance
 source("Scripts/skills_performance.R")
 
+# extendibility potential
+source("Scripts/extendibility.R")
 
 
 # vote and royalties determinants regression
