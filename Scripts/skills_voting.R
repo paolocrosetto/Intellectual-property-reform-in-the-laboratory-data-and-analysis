@@ -57,3 +57,5 @@ mean_test %>%
   kable_styling(latex_options = "scale_down") %>% 
   save_kable("Tables/Skills_rep2_by_IPregime.pdf")
 
+rm(mean_test, cohens)
+
