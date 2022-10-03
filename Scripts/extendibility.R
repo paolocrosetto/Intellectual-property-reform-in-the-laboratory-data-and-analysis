@@ -86,5 +86,25 @@ rbind(treat, vot) %>%
   pack_rows(start_row = 2, end_row = 2, group_label = "EPI, keep IP vs switch to noIP") %>% 
   save_kable("Tables/EPI_by_treatment.pdf")
 
+# does EPI decrease for losers? 
+
+# computing EPI differently for repetitions 1 and 2
+
+## loser is correct if rep == 2
+
+# moving up 
+summarised <- summarised %>% 
+  group_by(subjectID) %>% 
+  mutate(voteresult = last(voteresult))
+
+
+ext2 <- actions %>% 
+  select(subjectID, repetition, extendibility) %>% 
+  group_by(subjectID, repetition ) %>% 
+  summarise(ext = mean(extendibility, na.rm = T)) %>% 
+  left_join(summarised)
+
+tidy(t.test(ext2$ext[ext2$voteresult=="loser"]~ext2$repetition[ext2$voteresult=="loser"]))
+
 # cleanup
-rm(epi_pt, epi_royin, epi_skills, ext, cordf, vot, treat)
+rm(epi_pt, epi_royin, epi_skills, ext, ext2, cordf, vot, treat)

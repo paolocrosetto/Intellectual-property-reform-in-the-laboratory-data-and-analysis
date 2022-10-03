@@ -96,6 +96,12 @@ actions <- actions %>% left_join(pers_charac)
 
 rm(pers_charac, roy_aversion, skill_greed, luck)
 
+## small correction: first repetiton "loser" vairbale did not mean anything, 
+## only the repetition 2 variable makes sense
+## so keeping only the latter
+summarised <- summarised %>% 
+  group_by(subjectID) %>% 
+  mutate(voteresult = last(voteresult))
 
 
 ## group-level data
