@@ -17,8 +17,8 @@ actions <- actions %>%
 
 # merging with the summarised dataset
 ext <- actions %>% 
-  select(subjectID, extendibility) %>% 
-  group_by(subjectID) %>% 
+  select(subjectID, extendibility, repetition) %>% 
+  group_by(subjectID, repetition) %>% 
   summarise(ext = mean(extendibility, na.rm = T)) %>% 
   left_join(summarised)
 
@@ -64,15 +64,12 @@ bind_rows(epi_pt, epi_royin, epi_skills) %>%
   save_kable("Tables/Correlations_Extendibility_skills_performance.pdf")
 
 # does EPI differ by treatment?
-treat <- cordf %>% 
-  filter(repetition == 2) %>% 
-  group_modify(~tidy(t.test(ext~IPregime, data = .)))
+treat <- tidy(t.test(cordf$ext[cordf$repetition==2]~cordf$IPregime[cordf$repetition==2]))
+
+
 
 # does EPI differ by vote?
-vot <- cordf %>% 
-  filter(repetition == 1) %>% 
-  filter(votechr != "novote") %>% 
-  group_modify(~tidy(t.test(ext~votechr, data = .)))
+vot <- tidy(t.test(cordf$ext[cordf$repetition==1 & cordf$votechr !="novote"]~cordf$votechr[cordf$repetition==1 & cordf$votechr !="novote"]))
 
 # exporting t-test of differences
 rbind(treat, vot) %>% 
@@ -93,9 +90,7 @@ rbind(treat, vot) %>%
 ## loser is correct if rep == 2
 
 # moving up 
-summarised <- summarised %>% 
-  group_by(subjectID) %>% 
-  mutate(voteresult = last(voteresult))
+
 
 
 ext2 <- actions %>% 
@@ -104,7 +99,55 @@ ext2 <- actions %>%
   summarise(ext = mean(extendibility, na.rm = T)) %>% 
   left_join(summarised)
 
-tidy(t.test(ext2$ext[ext2$voteresult=="loser"]~ext2$repetition[ext2$voteresult=="loser"]))
+ext2 %>% 
+  filter(voteresult == "loser") %>% 
+  ggplot(aes(x = interaction(repetition, IPregime),y = ext, color = voteresult))+
+  ggbeeswarm::geom_quasirandom()+
+  stat_summary(color = "black")
 
-# cleanup
-rm(epi_pt, epi_royin, epi_skills, ext, ext2, cordf, vot, treat)
+ext2 %>% 
+  mutate(IP2 = if_else(repetition == 1, NA_character_, if_else(IPregime == "IP", "stayer", "leaver"))) %>% 
+  group_by(subjectID) %>% 
+  mutate(IP2 = last(IP2)) %>% 
+  select(IP2, everything( )) %>% 
+  group_by(voteresult, IP2) %>% 
+  group_modify(~tidy(t.test(ext~repetition, data = .)))
+
+t.test(ext2$ext[ext2$voteresult=="loser"]~ext2$repetition[ext2$voteresult=="loser"]) %>% 
+  tidy()
+
+t.test(ext2$ext[ext2$voteresult=="winner"]~ext2$repetition[ext2$voteresult=="winner"]) %>% 
+  tidy()
+
+# across loser/winner for period 1x
+t.test(ext2$ext[ext2$voteresult=="winner"]~ext2$repetition[ext2$voteresult=="winner"]) %>% 
+  tidy()
+
+
+chk <- summarised %>% 
+  filter(vote == "VOTE") %>% 
+  select(subjectID, repetition, IPregime, votechr, voteresult)
+
+chk %>% 
+  select(-voteresult) %>% 
+  pivot_wider(names_from = repetition, values_from = IPregime) %>% 
+  mutate(transition = if_else(`1` == "IP" & `2` == "noIP", "toNO", "toIP")) %>% 
+  select(subjectID, transition) -> trans
+
+chk <- chk %>% 
+  left_join(trans)
+
+chk <- chk %>% 
+  mutate(should = if_else(votechr == "IP" & transition == "toNO", "loser", "winner"))
+
+chk <- chk %>% 
+  mutate(chk = voteresult == should)
+
+table(chk$chk, chk$repetition)
+
+
+  
+  
+
+¨# cleanup
+rm(epi_pt, epi_royin, epi_skills, ext, cordf, vot, treat)
