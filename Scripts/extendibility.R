@@ -84,28 +84,7 @@ rbind(treat, vot) %>%
   save_kable("Tables/EPI_by_treatment.pdf")
 
 # does EPI decrease for losers? 
-
-# computing EPI differently for repetitions 1 and 2
-
-## loser is correct if rep == 2
-
-# moving up 
-
-
-
-ext2 <- actions %>% 
-  select(subjectID, repetition, extendibility) %>% 
-  group_by(subjectID, repetition ) %>% 
-  summarise(ext = mean(extendibility, na.rm = T)) %>% 
-  left_join(summarised)
-
-ext2 %>% 
-  filter(voteresult == "loser") %>% 
-  ggplot(aes(x = interaction(repetition, IPregime),y = ext, color = voteresult))+
-  ggbeeswarm::geom_quasirandom()+
-  stat_summary(color = "black")
-
-ext2 %>% 
+EPI_losers <- ext %>% 
   mutate(IP2 = if_else(repetition == 1, NA_character_, if_else(IPregime == "IP", "stayer", "leaver"))) %>% 
   group_by(subjectID) %>% 
   mutate(IP2 = last(IP2)) %>% 
@@ -113,41 +92,18 @@ ext2 %>%
   group_by(voteresult, IP2) %>% 
   group_modify(~tidy(t.test(ext~repetition, data = .)))
 
-t.test(ext2$ext[ext2$voteresult=="loser"]~ext2$repetition[ext2$voteresult=="loser"]) %>% 
-  tidy()
-
-t.test(ext2$ext[ext2$voteresult=="winner"]~ext2$repetition[ext2$voteresult=="winner"]) %>% 
-  tidy()
-
-# across loser/winner for period 1x
-t.test(ext2$ext[ext2$voteresult=="winner"]~ext2$repetition[ext2$voteresult=="winner"]) %>% 
-  tidy()
-
-
-chk <- summarised %>% 
-  filter(vote == "VOTE") %>% 
-  select(subjectID, repetition, IPregime, votechr, voteresult)
-
-chk %>% 
-  select(-voteresult) %>% 
-  pivot_wider(names_from = repetition, values_from = IPregime) %>% 
-  mutate(transition = if_else(`1` == "IP" & `2` == "noIP", "toNO", "toIP")) %>% 
-  select(subjectID, transition) -> trans
-
-chk <- chk %>% 
-  left_join(trans)
-
-chk <- chk %>% 
-  mutate(should = if_else(votechr == "IP" & transition == "toNO", "loser", "winner"))
-
-chk <- chk %>% 
-  mutate(chk = voteresult == should)
-
-table(chk$chk, chk$repetition)
-
-
-  
+EPI_losers %>% 
+  select(voteresult, "Transition" = IP2, estimate1, estimate2, p.value) %>% 
+  mutate(estimate1 = round(estimate1, 2),
+         estimate2 = round(estimate2, 2),
+         p.value = round(p.value, 3)) %>% 
+  mutate(Transition = if_else(Transition == "stayer", "IP to IP", "IP to noIP")) %>% 
+  kable(caption = "Mean EPI for winer and losers of the vote", 
+        format = "latex", booktabs = "T", 
+        col.names = c("Result of the vote", "Transition", "Rep1", "Rep2", "p.value")) %>% 
+  kable_styling(latex_options = "scale_down") %>% 
+  save_kable("Tables/EPI_by_losers.pdf")
   
 
-¨# cleanup
-rm(epi_pt, epi_royin, epi_skills, ext, cordf, vot, treat)
+# cleanup
+rm(epi_pt, epi_royin, epi_skills, ext, cordf, vot, treat, EPI_losers)
