@@ -92,15 +92,25 @@ EPI_losers <- ext %>%
   group_by(voteresult, IP2) %>% 
   group_modify(~tidy(t.test(ext~repetition, data = .)))
 
+EPI_cohens <- ext %>% 
+  mutate(IP2 = if_else(repetition == 1, NA_character_, if_else(IPregime == "IP", "stayer", "leaver"))) %>% 
+  group_by(subjectID) %>% 
+  mutate(IP2 = last(IP2)) %>% 
+  select(IP2, everything( )) %>% 
+  group_by(voteresult, IP2) %>% 
+  group_modify(~data.frame(cohens = cohen.d(ext~repetition, data = .)$estimate))
+
 EPI_losers %>% 
-  select(voteresult, "Transition" = IP2, estimate1, estimate2, p.value) %>% 
+  left_join(EPI_cohens) %>% 
+  select(voteresult, "Transition" = IP2, estimate1, estimate2, p.value, cohens) %>% 
   mutate(estimate1 = round(estimate1, 2),
          estimate2 = round(estimate2, 2),
-         p.value = round(p.value, 3)) %>% 
+         p.value = round(p.value, 3),
+         cohens = round(cohens, 3)) %>% 
   mutate(Transition = if_else(Transition == "stayer", "IP to IP", "IP to noIP")) %>% 
   kable(caption = "Mean EPI for winer and losers of the vote", 
         format = "latex", booktabs = "T", 
-        col.names = c("Result of the vote", "Transition", "Rep1", "Rep2", "p.value")) %>% 
+        col.names = c("Result of the vote", "Transition", "Rep1", "Rep2", "p.value", "cohens'd")) %>% 
   kable_styling(latex_options = "scale_down") %>% 
   save_kable("Tables/EPI_by_losers.pdf")
   
